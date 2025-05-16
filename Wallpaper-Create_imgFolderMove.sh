@@ -1,8 +1,14 @@
 #!/bin/bash
 
 # bc と ImageMagick のインストール確認
-command -v bc >/dev/null 2>&1 || { echo "Error: 'bc' is not installed. Please install it using 'pkg install bc'."; exit 1; }
-command -v identify >/dev/null 2>&1 || { echo "Error: 'ImageMagick' (identify) is not installed. Please install it using 'pkg install imagemagick'."; exit 1; }
+command -v bc >/dev/null 2>&1 || {
+    echo "Error: 'bc' is not installed. Please install it using 'pkg install bc'."
+    exit 1
+}
+command -v identify >/dev/null 2>&1 || {
+    echo "Error: 'ImageMagick' (identify) is not installed. Please install it using 'pkg install imagemagick'."
+    exit 1
+}
 
 # スクリプト自身のディレクトリを取得
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -76,7 +82,7 @@ while read -r file; do
         moved=true
     fi
 
-    if $is_portrait && (( $(echo "$aspect_ratio > 2.21" | bc -l) )) && (( $(echo "$aspect_ratio < 2.23" | bc -l) )); then
+    if $is_portrait && (($(echo "$aspect_ratio > 2.21" | bc -l))) && (($(echo "$aspect_ratio < 2.23" | bc -l))); then
         mv "$file" "$SMARTPHONE_DIR"
         echo "スマホへ移動: $file"
         smartphone_files=$((smartphone_files + 1))
@@ -87,7 +93,7 @@ while read -r file; do
     lower_bound=$(echo "scale=3; $ipad_ratio - 0.01" | bc)
     upper_bound=$(echo "scale=3; $ipad_ratio + 0.01" | bc)
 
-    if (( $(echo "$aspect_ratio >= $lower_bound" | bc -l) )) && (( $(echo "$aspect_ratio <= $upper_bound" | bc -l) )); then
+    if (($(echo "$aspect_ratio >= $lower_bound" | bc -l))) && (($(echo "$aspect_ratio <= $upper_bound" | bc -l))); then
         mv "$file" "$IPAD_DIR"
         echo "iPadへ移動: $file"
         ipad_files=$((ipad_files + 1))
@@ -103,7 +109,7 @@ while read -r file; do
 
     echo "総合進捗: $processed_files/$total_files ($(($processed_files * 100 / $total_files))%) - GearS3: $gears3_files - スマホ: $smartphone_files - iPad: $ipad_files - PC: $pc_files"
 
-done <<< "$files"
+done <<<"$files"
 
 echo -e "\n処理が完了しました。"
 echo "総合ファイル数: $total_files"
