@@ -22,7 +22,7 @@ fi
 mkdir -p "$output_folder"
 
 # フォルダ内のPNG画像を取得
-png_files=("./"*.png)
+png_files=("./"*.webp)
 total_files=${#png_files[@]}
 
 # PNGファイルが見つからない場合は終了
