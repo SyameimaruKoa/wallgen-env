@@ -5,9 +5,9 @@ max_size=$1
 resize_mode=$2
 iPad_mode=$3
 
-# max_sizeが指定されていない場合はエラーを表示して終了する
-if [ -z "$max_size" ]; then
-  echo "リサイズする最大解像度を指定しておくれ。例: ./script.sh 2388 [元拡張子] {iPad}"
+# resize_modeが指定されていない場合はエラーを表示して終了する
+if [ -z "$resize_mode" ]; then
+  echo "リサイズする縦解像度を指定しておくれ。例: ./script.sh 2388 [元拡張子] {iPad}"
   exit 1
 fi
 
