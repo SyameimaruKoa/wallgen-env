@@ -2,12 +2,14 @@
 
 このリポジトリには、壁紙画像を整理・加工するためのわっち特製スクリプトが入っておるのじゃ。以下の 3 つのスクリプトを使って、おぬしの壁紙ライフをもっと快適にするがよい！
 
+---
+
 ## スクリプト一覧じゃ
 
 ### 1.`Wallpaper-Create_imgFolderMove.sh`
 
-大量の画像ファイルを、そのサイズや形によって自動的に分類するスクリプトじゃ。ダウンロードした壁紙をごちゃ混ぜにしておくと探すのが大変じゃろう？
-これを使えば、デバイスごとにぴったりの壁紙を簡単に見つけられるようになるぞ。
+大量の画像ファイルを、そのサイズや形によって自動的に分類するスクリプトじゃ。機種別のアスペクトで切り抜いた画像をごちゃ混ぜにしておくと後の処理が大変じゃろう？
+これを使えば、デバイスごとに整理してくれるぞ。
 
 **機能:**
 
@@ -25,36 +27,74 @@
 - `ImageMagick`(`identify`コマンドを使うのじゃ。`pkg install imagemagick`で Termux にインストールじゃ。)
 - (外部ストレージの画像を扱う場合)Termux にストレージへのアクセス権限が必要になる。これは `termux-setup-storage`というコマンドで設定できる場合があるのじゃ。
 
+---
+
 ### 2.`Wallpaper-Create_imgResize.sh`
 
-PNG 画像を、指定した最大解像度に合わせてリサイズし、JPG または WebP 形式で出力するスクリプトじゃ。
-特定のデバイスに合わせたサイズにしたいときや、ファイル形式を変換したいときに役立つぞ。
+指定した画像ファイルを、柔軟なオプションでリサイズし、JPG または WebP 形式で出力するスクリプトじゃ。
+壁紙を作成する際など、様々な形式の画像を特定のルールで一括変換したいときに役立つぞ。
 
-**機能:**
+**機能**
 
-- カレントディレクトリにある PNG ファイルを対象とする。
-- 引数で指定された最大解像度に基づいて画像をリサイズする。
-- 第二引数に拡張子を指定することで、任意の形式で出力する。
-- 出力ファイルは、元のディレクトリ名に `_[拡張子]`を付けた新しいフォルダに保存される。
+- カレントディレクトリにある、指定した拡張子の画像ファイルを全て処理対象とする。
+- リサイズ方法を 2 種類から選択可能。
+  1. **縦基準（デフォルト）**: 画像の縦の長さを指定した解像度に合わせる。
+  2. **長辺基準 (`fit`)**: 画像の最も長い辺を指定した解像度に合わせ、アスペクト比を維持したまま縮小する。
+- 出力形式を JPG（デフォルト）または WebP から選択可能。
+- 出力ファイルは、元のディレクトリ名に `_Resized_[解像度]px` を付けた新しいフォルダに保存される。
 
-**使い方:**
-スクリプトの後に、リサイズしたい最大解像度と、必要であれば第三引数に `iPad`を引数として付けて実行するのじゃ。
+### 使い方
 
-- 高さを 1200 ピクセルにリサイズして JPG で出力 (PC 16:10 向け):
+スクリプトの後に、必須の引数と、必要に応じてオプションを付けて実行するのじゃ。
+オプションの `fit` と `webp` は、順不同で、片方だけの指定も可能じゃ。
 
-```
-Bash Wallpaper-Create_imgResize.sh 1200 jpg
-```
+**基本構文:**
 
-- 大きい辺を 2388 ピクセルにリサイズして WebP で出力 (iPad 用):
-
-```
-Bash Wallpaper-Create_imgResize.sh 2388 webp iPad
+```bash
+./Wallpaper-Create_imgResize.sh [解像度] [元拡張子] {fit} {webp}
 ```
 
-**必要なもの:**
+**使用例:**
 
-- `magick`または `convert`コマンド(`ImageMagick`に含まれておるぞ。`pkg install imagemagick`で Termux にインストールするのじゃ。)
+- **例 1: 縦長の壁紙用にリサイズ (JPG 出力)**
+  カレントディレクトリの全 `png`ファイルを、高さを `2400`ピクセルにして `jpg`で出力する。
+
+  ```bash
+  ./Wallpaper-Create_imgResize.sh 2400 png
+  ```
+
+- **例 2: 長辺を基準にリサイズ (JPG 出力)**
+  カレントディレクトリの全 `heic`ファイルを、長辺が `2778`ピクセルになるように `jpg`で出力する。
+
+  ```bash
+  ./Wallpaper-Create_imgResize.sh 2778 heic fit
+  ```
+
+- **例 3: WebP 形式で出力**
+  カレントディレクトリの全 `png`ファイルを、高さを `1200`ピクセルにして `webp`で出力する。
+
+  ```bash
+  ./Wallpaper-Create_imgResize.sh 1200 png webp
+  ```
+
+- **例 4: 長辺基準かつ WebP 形式で出力**
+  カレントディレクトリの全 `jpg`ファイルを、長辺が `2388`ピクセルになるように `webp`で出力する。
+
+  ```bash
+  ./Wallpaper-Create_imgResize.sh 2388 jpg fit webp
+  ```
+
+### 必要なもの
+
+- `magick` または `convert` コマンド (`ImageMagick`に含まれておるぞ)
+
+**Termux へのインストール例:**
+
+```bash
+pkg install imagemagick
+```
+
+---
 
 ### 3. `Wallpaper-Create_imgSizeMove.sh`
 
@@ -72,25 +112,25 @@ Bash Wallpaper-Create_imgResize.sh 2388 webp iPad
 
 - 高解像度の高い方が 1920 ピクセル未満の画像を移動
 
-```
-bash Wallpaper-Create_imgSizeMove.sh 1920
+```bash
+./Wallpaper-Create_imgSizeMove.sh 1920
 ```
 
 - FHD (1920x1080 / 1200) 未満の画像を移動
 
-```
-bash Wallpaper-Create_imgSizeMove.sh FHD
+```bash
+./Wallpaper-Create_imgSizeMove.sh FHD
 ```
 
 - 4K (3840x2160 / 2400) 未満の画像を移動
 
-```
-bash Wallpaper-Create_imgSizeMove.sh 4K
+```bash
+./Wallpaper-Create_imgSizeMove.sh 4K
 ```
 
 - Galaxy S22 Ultra (3200) 未満の画像を移動
 
-```
+```bash
 ./Wallpaper-Create_imgSizeMove.sh S22U
 ```
 
@@ -99,24 +139,3 @@ bash Wallpaper-Create_imgSizeMove.sh 4K
 - `ImageMagick`(`identify`コマンドじゃ。`pkg install imagemagick`で Termux にインストールするのじゃ。)
 - `bc`コマンド(`pkg install bc`で Termux にインストールするのじゃ。)
 - (外部ストレージの画像を扱う場合)Termux にストレージへのアクセス権限が必要になるやもしれぬな。`termux-setup-storage`で設定しておくと良いじゃろう。
-
-### 4. `PhotoEditor整理（tsu時どこでも実行可）.sh`
-
-Termux でわっちのスクリプト群をより手軽に使うためのものじゃ。
-
-**機能:**
-
-- スクリプトが実行されたら、まず`/sdcard/Pictures/Photo Editor/`というディレクトリに移動するのじゃ。
-- その後、`/sdcard/イラスト編集用/`に置いてある`Wallpaper-Create_imgFolderMove.sh`スクリプトを実行するぞ。
-
-**使い方:**
-このスクリプトを Termux の好きな場所に置いて、実行権限を付けて実行するだけじゃ。例えば、ホームディレクトリに置いておけば、どこにいてもこのスクリプト一つで壁紙の分類ができるようになるぞ。
-
-```
-bash PhotoEditor整理（tsu時どこでも実行可）.sh
-```
-
-**必要なもの:**
-
-- Termux にストレージへのアクセス権限が必要じゃ。`termux-setup-storage`コマンドで設定するのじゃぞ。
-- 実行する`Wallpaper-Create_imgFolderMove.sh`スクリプトが、指定されたパス(`/sdcard/イラスト編集用/`)に存在する必要がある。
