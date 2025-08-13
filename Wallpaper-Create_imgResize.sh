@@ -95,7 +95,7 @@ for img_path in "${source_files[@]}"; do
   output_path="${output_folder}/${filename_no_ext}.${output_format}"
 
   # 画像をリサイズして変換・保存する
-  $CMD "$img_path" -resize "$resize_option" -quality 95 "$output_path"
+  $CMD "$img_path" -resize "$resize_option" -quality 90 "$output_path"
 
   # 進捗を表示する
   count=$((count + 1))
