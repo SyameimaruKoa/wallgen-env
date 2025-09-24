@@ -1,10 +1,33 @@
 #!/bin/bash
 
-# 引数が指定されているかチェック
-if [ -z "$1" ]; then
-  echo "エラー: サイズ引数が指定されていません。サイズのしきい値を指定してください。"
-  echo "Usage: $0 <size | FHD | 4K | S22U>"
-  exit 1
+# ヘルプメッセージを表示する関数
+show_help() {
+  cat << EOF
+Usage: $(basename "$0") <size | FHD | 4K | S22U>
+
+指定された解像度の閾値未満の画像を、新しいフォルダに移動します。
+
+Description:
+  現在のディレクトリにある画像ファイル（jpg, png, jpeg）を分析し、
+  指定された解像度よりも小さいものを移動させます。
+  フォルダは現在のディレクトリの親に「<カレントディレクトリ名>_<閾値>未満」という名前で作成されます。
+  アスペクト比が16:9の画像は、さらに「-16_9」という接尾辞が付いたフォルダに移動されます。
+
+Arguments:
+  size    移動対象とする画像の高さの最大値（ピクセル数）を指定します。
+  FHD     FHD解像度（16:9の場合は高さ1080px、それ以外は1200px）を閾値とします。
+  4K      4K解像度（16:9の場合は高さ2160px、それ以外は2400px）を閾値とします。
+  S22U    Galaxy S22 Ultraの解像度（高さ3200px）を閾値とします。
+
+Options:
+  -h, --help    このヘルプメッセージを表示します。
+EOF
+}
+
+# -h または --help が指定された場合、または引数がない場合にヘルプを表示
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [ -z "$1" ]; then
+  show_help
+  exit 0
 fi
 
 # 引数からサイズを取得
@@ -17,7 +40,7 @@ current_dir=$(basename "$PWD")
 parent_dir=$(dirname "$PWD")
 
 # 移動先のフォルダを親フォルダに作成
-target_dir="${parent_dir}/${current_dir}_$input未満"
+target_dir="${parent_dir}/${current_dir}_${input}未満"
 mkdir -p "$target_dir"
 
 # 処理対象の画像ファイルをリストアップ

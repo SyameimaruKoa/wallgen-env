@@ -1,25 +1,48 @@
 #!/bin/bash
 # UTF-8で保存するのじゃぞ
 
-# --- 使い方 ---
-# ./script.name [解像度] [元拡張子] {オプション1} {オプション2}
-#
-# [解像度]    : 必須。リサイズ後の基準となる解像度 (例: 2400)
-# [元拡張子]  : 必須。変換したい画像の拡張子 (例: png)
-# {オプション}: 任意。"fit" または "webp" を指定できる。順不同。
-#   - fit  : 画像全体が指定解像度に収まるようにリサイズする（長辺基準）。
-#            指定しない場合は、画像の縦の長さを基準にリサイズする。
-#   - webp : 出力形式をWebPにする。指定しない場合はJPGになる。
-# ----------------
+# ヘルプメッセージを表示する関数
+show_help() {
+  cat << EOF
+Usage: $(basename "$0") <resolution> <source_ext> [fit] [webp]
 
-# --- 必須引数のチェック ---
-if [ -z "$1" ] || [ -z "$2" ]; then
-  echo "引数が足りんぞ！"
-  echo "使い方: $0 [解像度] [元拡張子] {fit} {webp}"
-  echo "例 (縦2400pxのJPGに): $0 2400 png"
-  echo "例 (長辺2400pxのJPGに): $0 2400 heic fit"
-  echo "例 (長辺2400pxのWebPに): $0 2400 jpg fit webp"
-  exit 1
+指定した拡張子の画像をリサイズし、JPGまたはWebP形式で保存します。
+
+Description:
+  カレントディレクトリにある指定された拡張子の画像ファイルを、指定の解像度に
+  リサイズします。出力先として「<カレントディレクトリ名>_Resized_<解像度>px」
+  という名前のフォルダが自動的に作成されます。
+
+Arguments:
+  resolution   必須。リサイズ後の基準となる解像度（ピクセル数）を指定します。
+               例: 2400
+  source_ext   必須。変換したい画像の拡張子を指定します。
+               例: png
+
+Options:
+  fit           任意。このオプションを指定すると、画像の長辺が<resolution>に
+                収まるようにリサイズされます（アスペクト比は維持）。
+                指定しない場合は、画像の高さが<resolution>になるようにリサイズされます。
+  webp          任意。このオプションを指定すると、出力形式がWebPになります。
+                指定しない場合はJPG形式で保存されます。
+  -h, --help    このヘルプメッセージを表示します。
+
+Examples:
+  # PNG画像を高さ2400pxのJPGに変換
+  $(basename "$0") 2400 png
+
+  # HEIC画像を長辺2400pxのJPGに変換
+  $(basename "$0") 2400 heic fit
+
+  # JPG画像を長辺2400pxのWebPに変換
+  $(basename "$0") 2400 jpg fit webp
+EOF
+}
+
+# -h または --help が指定された場合、または必須引数が2つ未満の場合にヘルプを表示
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]] || [ $# -lt 2 ]; then
+  show_help
+  exit 0
 fi
 
 # --- 引数の受け取りと設定 ---
@@ -54,10 +77,11 @@ source_files=("./"*.${source_ext})
 total_files=${#source_files[@]}
 
 # 対象ファイルが一つもなければ終了する
-if [ $total_files -eq 0 ]; then
+if [ ${#source_files[@]} -eq 0 ] || [ ! -f "${source_files[0]}" ]; then
   echo "拡張子 '${source_ext}' のファイルが見つからんかったぞ。"
   exit 1
 fi
+
 
 # ImageMagickのコマンドを確認する
 if command -v magick >/dev/null 2>&1; then

@@ -1,5 +1,35 @@
 #!/bin/bash
 
+# ヘルプメッセージを表示する関数
+show_help() {
+  cat << EOF
+Usage: $(basename "$0")
+
+カレントディレクトリ内の画像ファイルを、解像度やアスペクト比に応じて
+デバイス別のフォルダに自動で振り分けます。
+
+Description:
+  このスクリプトは、カレントディレクトリにある画像ファイル（jpg, jpeg, png, webp）を
+  分析し、以下のルールに基づいて「壁紙転送」フォルダ内の各デバイス用サブフォルダに移動します。
+  - GearS3     : 360x360pxの画像
+  - スマホ       : 縦長で特定のアスペクト比（約2.22）の画像
+  - iPad Pro   : 特定のアスペクト比（約1.43）の画像
+  - パソコン     : 上記のいずれにも一致しない画像
+
+Prerequisites:
+  このスクリプトを実行するには 'bc' と 'ImageMagick' が必要です。
+
+Options:
+  -h, --help    このヘルプメッセージを表示します。
+EOF
+}
+
+# -h または --help が指定された場合にヘルプを表示
+if [[ "$1" == "-h" ]] || [[ "$1" == "--help" ]]; then
+  show_help
+  exit 0
+fi
+
 # bc と ImageMagick のインストール確認
 command -v bc >/dev/null 2>&1 || {
     echo "Error: 'bc' is not installed. Please install it using 'pkg install bc'."
