@@ -49,7 +49,7 @@ main() {
             fi
         done
         
-        if [ "$count" -ge 3 ]; then
+        if [ "$count" -ge 2 ]; then
             mkdir -p "$prefix"
             for match_file in "${prefix}"_*; do
                 if [ -f "$match_file" ]; then
