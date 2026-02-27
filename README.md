@@ -158,4 +158,55 @@ Twitter などでダウンロードした画像や動画ファイルを、
 ようにまとめられておる場合、`ABC/` というフォルダが
 生成され、中に移動するのじゃ。
 
-（既存の説明のあとに追加）
+## セットアップスクリプト
+
+### 4. `setup-illust-env.sh`
+
+`/sdcard/イラスト編集用` 以下のフォルダ構成を一括作成し、
+`Script/` フォルダ内に本リポジトリ（`SyameimaruKoa/wallgen-env`）を clone するスクリプトじゃ。
+Termux または root 環境での実行を想定しておる。
+
+**作成されるフォルダ構成:**
+
+```text
+/sdcard/イラスト編集用/
+ Photo Editor/
+ Script/      ← GitHub からクローン
+ 壁紙転送/
+ 整理済み/
+   ├── イラスト/
+   ├── 公式/
+   ├── 移動用/
+   ├── 素材/
+   └── 裏イラスト/
+ 未整理/
+    ├── Twitter/
+    └── pixiv/
+```
+
+**オプション:**
+
+| オプション     | 説明                                         |
+| -------------- | -------------------------------------------- |
+| `-h`, `--help` | ヘルプを表示して終了                         |
+| `--no-clone`   | git clone をスキップし、フォルダ作成のみ行う |
+| `--dry-run`    | 実際には何も変更せず、実行内容を表示する     |
+
+**使い方:**
+
+```sh
+# 通常実行（フォルダ作成 + clone）
+sh setup-illust-env.sh
+
+# フォルダ作成のみ
+sh setup-illust-env.sh --no-clone
+
+# dry-run で確認
+sh setup-illust-env.sh --dry-run
+```
+
+**注意:**
+
+* Termux の場合は `/sdcard` へのアクセス権が必要。事前に `termux-setup-storage` を実行すること。
+* git clone には `git` コマンドが必要。Termux なら `pkg install git` でインストール。
+
