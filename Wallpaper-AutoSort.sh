@@ -21,10 +21,11 @@ Usage: $(basename "$0")
 [保存先構造]
     スクリプトの親フォルダ/壁紙転送/
     ├── GearS3/             (360x360)
-    ├── スマホ/              (縦長, S22Uサイズ以上)
+    ├── スマホ/              (縦長, 20:9/9:16/10:16, S22Uサイズ以上)
     ├── スマホ_S22U未満/       (スマホ判定だが低解像度)
     ├── iPad Pro/           (4:3等, 長辺2388px以上)
     ├── iPad Pro_2388未満/    (iPad判定だが低解像度)
+    ├── 不正ファイル/          (スマホ/iPad以外の縦画像)
     ├── パソコン/             (その他, 4K以上)
     ├── パソコン_4K未満/      (FHD以上 4K未満) [-16_9]
     └── パソコン_FHD未満/     (FHD未満) [-16_9]
@@ -79,9 +80,13 @@ count=0
 # 集計用変数
 count_gears3=0
 count_phone=0
+count_phone_low=0
 count_ipad=0
-count_pc=0
-count_lowres=0
+count_ipad_low=0
+count_pc_4k=0
+count_pc_mid=0
+count_pc_low=0
+count_invalid=0
 
 # ループ処理
 while read -r file; do
@@ -159,7 +164,6 @@ while read -r file; do
     
     dest_dir=""
     category=""
-    is_lowres=0
 
     # 1. GearS3 (360x360 固定)
     if [ "$width" -eq 360 ] && [ "$height" -eq 360 ]; then
@@ -167,10 +171,15 @@ while read -r file; do
         category="GearS3"
         count_gears3=$((count_gears3 + 1))
 
-    # 2. スマホ (縦長 かつ アスペクト比 2.22周辺)
-    elif [ "$height" -gt "$width" ] && \
-         (( $(echo "scale=3; $height / $width > 2.21" | bc -l) )) && \
-         (( $(echo "scale=3; $height / $width < 2.23" | bc -l) )); then
+        # 2. スマホ (縦長 かつ アスペクト比 20:9 / 9:16 / 10:16 周辺)
+        elif [ "$height" -gt "$width" ] && ( \
+                 ( (( $(echo "scale=3; $height / $width > 2.21" | bc -l) )) && \
+                     (( $(echo "scale=3; $height / $width < 2.23" | bc -l) )) ) || \
+                 ( (( $(echo "scale=3; $height / $width > 1.76" | bc -l) )) && \
+                     (( $(echo "scale=3; $height / $width < 1.79" | bc -l) )) ) || \
+                 ( (( $(echo "scale=3; $height / $width > 1.59" | bc -l) )) && \
+                     (( $(echo "scale=3; $height / $width < 1.61" | bc -l) )) ) \
+                 ); then
          
         # S22U基準: 高さ 3200px
         if [ "$height" -ge 3200 ]; then
@@ -179,8 +188,8 @@ while read -r file; do
             count_phone=$((count_phone + 1))
         else
             dest_dir="$DEST_ROOT/スマホ_S22U未満"
-            category="スマホ(低)"
-            count_lowres=$((count_lowres + 1))
+            category="スマホ_S22U未満"
+            count_phone_low=$((count_phone_low + 1))
         fi
 
     # 3. iPad Pro (アスペクト比 1.43周辺)
@@ -194,11 +203,17 @@ while read -r file; do
             count_ipad=$((count_ipad + 1))
         else
             dest_dir="$DEST_ROOT/iPad Pro_2388未満"
-            category="iPad(低)"
-            count_lowres=$((count_lowres + 1))
+            category="iPad Pro_2388未満"
+            count_ipad_low=$((count_ipad_low + 1))
         fi
 
-    # 4. パソコン (上記以外)
+    # 4. 不正ファイル (スマホ/iPadに該当しない縦画像)
+    elif [ "$height" -gt "$width" ]; then
+        dest_dir="$DEST_ROOT/不正ファイル"
+        category="不正"
+        count_invalid=$((count_invalid + 1))
+
+    # 5. パソコン (上記以外)
     else
         # 閾値設定 (16:9かどうかで判定基準が変わる)
         if [ "$is_16_9" -eq 1 ]; then
@@ -213,20 +228,26 @@ while read -r file; do
         if [ "$height" -ge "$th_4k" ]; then
             # 4K以上
             dest_dir="$DEST_ROOT/パソコン"
-            category="PC(4K)"
-            count_pc=$((count_pc + 1))
+            category="パソコン"
+            count_pc_4k=$((count_pc_4k + 1))
         elif [ "$height" -ge "$th_fhd" ]; then
             # 4K未満 FHD以上
             dest_dir="$DEST_ROOT/パソコン_4K未満"
-            if [ "$is_16_9" -eq 1 ]; then dest_dir="${dest_dir}-16_9"; fi
-            category="PC(Mid)"
-            count_pc=$((count_pc + 1))
+            category="パソコン_4K未満"
+            if [ "$is_16_9" -eq 1 ]; then
+                dest_dir="${dest_dir}-16_9"
+                category="${category}-16_9"
+            fi
+            count_pc_mid=$((count_pc_mid + 1))
         else
             # FHD未満
             dest_dir="$DEST_ROOT/パソコン_FHD未満"
-            if [ "$is_16_9" -eq 1 ]; then dest_dir="${dest_dir}-16_9"; fi
-            category="PC(Low)"
-            count_lowres=$((count_lowres + 1))
+            category="パソコン_FHD未満"
+            if [ "$is_16_9" -eq 1 ]; then
+                dest_dir="${dest_dir}-16_9"
+                category="${category}-16_9"
+            fi
+            count_pc_low=$((count_pc_low + 1))
         fi
     fi
 
@@ -252,7 +273,11 @@ echo ""
 echo "【内訳】"
 echo "  GearS3 : $count_gears3"
 echo "  スマホ : $count_phone"
-echo "  iPad   : $count_ipad"
-echo "  PC系   : $count_pc"
-echo "  低画質 : $count_lowres (各未満フォルダへ移動済)"
+echo "  スマホ_S22U未満 : $count_phone_low"
+echo "  iPad Pro : $count_ipad"
+echo "  iPad Pro_2388未満 : $count_ipad_low"
+echo "  不正ファイル : $count_invalid"
+echo "  パソコン : $count_pc_4k"
+echo "  パソコン_4K未満(※-16_9含む) : $count_pc_mid"
+echo "  パソコン_FHD未満(※-16_9含む) : $count_pc_low"
 echo "----------------------------------------"
