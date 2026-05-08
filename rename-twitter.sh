@@ -30,6 +30,9 @@ main() {
         [ -f "$file" ] || continue
         prefix="${file%_*}"
         if [ "$prefix" = "$file" ]; then
+            # _ が含まれないファイルは条件未満へ
+            mkdir -p "条件未満"
+            mv "$file" "条件未満/"
             continue
         fi
         
@@ -54,6 +57,14 @@ main() {
             for match_file in "${prefix}"_*; do
                 if [ -f "$match_file" ]; then
                     mv "$match_file" "$prefix/"
+                fi
+            done
+        else
+            # 1つしかない場合も条件未満へ
+            mkdir -p "条件未満"
+            for match_file in "${prefix}"_*; do
+                if [ -f "$match_file" ]; then
+                    mv "$match_file" "条件未満/"
                 fi
             done
         fi
