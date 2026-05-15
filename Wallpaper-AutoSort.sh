@@ -235,16 +235,16 @@ printf "\r\033[K"
 echo "----------------------------------------"
 
 # --- 結果集計 ---
-count_gears3=$(grep -c "^GearS3" "$TMP_LOG" || echo 0)
-count_phone=$(grep -c "^スマホ$" "$TMP_LOG" || echo 0)
-count_phone_low=$(grep -c "^スマホ_S22U未満" "$TMP_LOG" || echo 0)
-count_ipad=$(grep -c "^iPad Pro$" "$TMP_LOG" || echo 0)
-count_ipad_low=$(grep -c "^iPad Pro_2388未満" "$TMP_LOG" || echo 0)
-count_invalid=$(grep -c "^不正ファイル" "$TMP_LOG" || echo 0)
-count_pc_4k=$(grep -c "^パソコン$" "$TMP_LOG" || echo 0)
-count_pc_mid=$(grep -c "^パソコン_4K未満" "$TMP_LOG" || echo 0)
-count_pc_low=$(grep -c "^パソコン_FHD未満" "$TMP_LOG" || echo 0)
-skip_count=$(grep -c "^Skip:" "$TMP_LOG" || echo 0)
+count_gears3=$(grep -c "^GearS3" "$TMP_LOG" || true)
+count_phone=$(grep -c "^スマホ$" "$TMP_LOG" || true)
+count_phone_low=$(grep -c "^スマホ_S22U未満" "$TMP_LOG" || true)
+count_ipad=$(grep -c "^iPad Pro$" "$TMP_LOG" || true)
+count_ipad_low=$(grep -c "^iPad Pro_2388未満" "$TMP_LOG" || true)
+count_invalid=$(grep -c "^不正ファイル" "$TMP_LOG" || true)
+count_pc_4k=$(grep -c "^パソコン$" "$TMP_LOG" || true)
+count_pc_mid=$(grep -c "^パソコン_4K未満" "$TMP_LOG" || true)
+count_pc_low=$(grep -c "^パソコン_FHD未満" "$TMP_LOG" || true)
+skip_count=$(grep -c "^Skip:" "$TMP_LOG" || true)
 
 echo "処理完了。出力先: $DEST_ROOT"
 echo "総ファイル数: $total_files"
