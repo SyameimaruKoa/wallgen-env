@@ -3,6 +3,7 @@
 
 main() {
     OPT_SINGLE=false
+    OPT_RESCAN=false
 
     for arg in "$@"; do
         case "$arg" in
@@ -12,6 +13,9 @@ main() {
                 ;;
             --adb|--single)
                 OPT_SINGLE=true
+                ;;
+            --rescan)
+                OPT_RESCAN=true
                 ;;
         esac
     done
@@ -34,6 +38,79 @@ main() {
     fi
 
     cd "$TARGET_DIR" || exit 1
+
+    if [ "$OPT_RESCAN" = "true" ]; then
+        if [ ! -d "条件未満" ]; then
+            echo "「条件未満」フォルダがないぞ。"
+            exit 0
+        fi
+
+        TMP_RESCAN_PREFIXES=$(mktemp)
+        for file in 条件未満/*_*; do
+            [ -e "$file" ] || continue
+            [ -f "$file" ] || continue
+            basename_file="${file##*/}"
+            echo "${basename_file%_*}"
+        done | sort | uniq > "$TMP_RESCAN_PREFIXES"
+
+        total=$(wc -l < "$TMP_RESCAN_PREFIXES")
+        if [ "$total" -eq 0 ]; then
+            echo "再スキャンする対象がないのう。"
+            rm -f "$TMP_RESCAN_PREFIXES"
+            exit 0
+        fi
+
+        current=0
+        while IFS= read -r prefix; do
+            [ -z "$prefix" ] && continue
+            current=$((current + 1))
+            printf "\r\033[K[%d/%d] 再スキャンチェック中: %s" "$current" "$total" "$prefix"
+            
+            if [ -d "$prefix" ]; then
+                for match_file in "条件未満/${prefix}_"*; do
+                    if [ -f "$match_file" ]; then
+                        mv "$match_file" "$prefix/" 2>/dev/null
+                    fi
+                done
+                continue
+            fi
+            
+            count_parent=0
+            for f in "${prefix}_"*; do
+                if [ -f "$f" ]; then
+                    count_parent=$((count_parent + 1))
+                fi
+            done
+            
+            count_sub=0
+            for f in "条件未満/${prefix}_"*; do
+                if [ -f "$f" ]; then
+                    count_sub=$((count_sub + 1))
+                fi
+            done
+            
+            total_count=$((count_parent + count_sub))
+            
+            if [ "$total_count" -ge 2 ]; then
+                mkdir -p "$prefix"
+                for match_file in "${prefix}_"*; do
+                    if [ -f "$match_file" ]; then
+                        mv "$match_file" "$prefix/" 2>/dev/null
+                    fi
+                done
+                for match_file in "条件未満/${prefix}_"*; do
+                    if [ -f "$match_file" ]; then
+                        mv "$match_file" "$prefix/" 2>/dev/null
+                    fi
+                done
+            fi
+        done < "$TMP_RESCAN_PREFIXES"
+
+        rm -f "$TMP_RESCAN_PREFIXES"
+        echo ""
+        echo "再スキャン完了じゃ！"
+        exit 0
+    fi
 
     # '_' が含まれないファイルを先に「条件未満」へ移動するのじゃ
     mkdir -p "条件未満"
@@ -141,7 +218,6 @@ main() {
             [ -z "$prefix" ] && continue
             process_prefix "$prefix" &
             
-            # wait -n が使えない環境のためのフォールバック処理じゃ
             while [ $(jobs -pr | wc -l) -ge $((MAX_JOBS + 1)) ]; do
                 wait -n 2>/dev/null || sleep 0.1
             done
@@ -162,6 +238,7 @@ show_help() {
     echo "  <target_directory> : 対象ディレクトリ"
     echo "  -h, --help         : ヘルプを表示するのじゃ"
     echo "  --adb, --single    : ADB shell等の環境向けに直列（シングル）で処理するのじゃ"
+    echo "  --rescan           : 「条件未満」フォルダ内のファイルを再スキャンするのじゃ"
 }
 
 main "$@"
