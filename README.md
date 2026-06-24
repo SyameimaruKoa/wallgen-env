@@ -117,6 +117,41 @@ Twitter などでダウンロードした画像や動画ファイルを、接頭
 ./rename-twitter.sh <対象ディレクトリ>
 ```
 
+### 4. [png2webp_lossless.sh](png2webp_lossless.sh)
+
+カレントディレクトリ以下の PNG ファイルを再帰的に探索し、**ロスレス WebP** に変換するスクリプトじゃ。メタデータ（タグ・更新時刻等）をすべて引き継ぎ、変換・検証に成功したファイルのみ元の PNG を削除する安全設計になっておるぞ。
+
+**マルチプロセスによる並列処理**にも対応しており、論理コア数に合わせた並列変換で高速に処理するのじゃ。進捗バーや完了予想時間（ETA）の表示も付いておるぞ。
+
+**動作フロー:**
+
+1. `find` で PNG を再帰探索
+2. ImageMagick でロスレス WebP に変換
+3. 出力ファイルの整合性を検証 (`magick identify`)
+4. `exiftool` で全メタデータを PNG → WebP にコピー
+5. メタデータの引き継ぎを検証
+6. ファイルシステムのタイムスタンプ（更新日時）を復元
+7. **すべて成功した場合のみ**元 PNG を削除
+
+**使い方:**
+
+```bash
+# 対象フォルダに移動して実行
+cd /path/to/対象フォルダ
+/path/to/png2webp_lossless.sh
+
+# 確認だけ行う（実際には何も変更しない）
+/path/to/png2webp_lossless.sh --dry-run
+
+# シングルスレッドで実行
+/path/to/png2webp_lossless.sh --single
+```
+
+**必要なもの:**
+
+- `ImageMagick 7` (magick コマンド)
+- `exiftool`
+
 ## 旧スプリクト
 
 気が向いた時に[Old-Archive](Old-Archive)内に[README.md](Old-Archive/README.md)を作ります
