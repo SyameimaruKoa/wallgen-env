@@ -1,6 +1,6 @@
 # 壁紙作成支援スクリプト群
 
-> **警告**: AVIFがスキップされた場合はImageMagickがAVIFに対応していないので、対応したビルドをする必要がある。x86パソコンなら多分[これ](https://gist.github.com/SyameimaruKoa/aef812cc330f84c96581daee594db008)でビルドできると思うが、Termuxはわからん。
+> **警告**: AVIFがスキップされた場合はImageMagickがAVIFに対応していないので、対応したビルドをする必要がある。
 > 
 > Photo Editorアプリではavifで保存できないから、Androidでavifファイルで保存する機会なんて殆ど無いし大丈夫だよね☆
 
