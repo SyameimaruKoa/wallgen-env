@@ -1,9 +1,10 @@
-#!/bin/sh
+#!/bin/bash
 # clean-empty-dirs.sh
 # イラスト編集用フォルダ内の不要な空フォルダを再帰的に削除し、
 # 未整理フォルダ内の単一の入れ子フォルダを解消する。
 
 set -eu
+shopt -s nullglob dotglob
 
 # ヘルプ表示
 show_help() {
@@ -100,22 +101,34 @@ is_protected() {
     esac
 }
 
+# ディレクトリが空であるか判定する関数
+is_dir_empty() {
+    local dir="$1"
+    local f
+    for f in "$dir"/*; do
+        return 1
+    done
+    return 0
+}
+
 # 1つだけフォルダが入っていて、他にファイルが存在しないか判定する関数
 # 条件を満たす場合は、その中のフォルダパスを返し、ステータスコード0を返す。
 get_single_subdir() {
     local dir="$1"
+    local f
+    local entry_count=0
+    local entry_name=""
     
-    # ファイル・フォルダの一覧数をカウント (ls -A を利用)
-    local entry_count
-    entry_count=$(ls -A "$dir" 2>/dev/null | wc -l | tr -d ' ')
-    if [ "$entry_count" -ne 1 ]; then
-        return 1
-    fi
+    for f in "$dir"/*; do
+        entry_count=$((entry_count + 1))
+        if [ "$entry_count" -gt 1 ]; then
+            return 1
+        fi
+        entry_name="$f"
+    done
     
-    local entry_name
-    entry_name=$(ls -A "$dir" 2>/dev/null)
-    if [ -d "$dir/$entry_name" ]; then
-        echo "$dir/$entry_name"
+    if [ "$entry_count" -eq 1 ] && [ -d "$entry_name" ]; then
+        echo "$entry_name"
         return 0
     fi
     return 1
@@ -128,11 +141,8 @@ deleted_count=0
 cd "$TARGET_DIR_ABS"
 
 # find -depth で深い階層のディレクトリから順にリストアップ
-# POSIX sh 互換のためテンポラリファイルを使用してループを回す
-tmp_dirs=".dirs_$$"
-find . -depth -type d > "$tmp_dirs"
-
-while read -r dir; do
+# プロセス置換を使用して一時ファイル作成を避ける
+while IFS= read -r -d '' dir; do
     # ./ を除去して相対パスを取得
     rel_path="${dir#./}"
     
@@ -147,7 +157,7 @@ while read -r dir; do
     fi
     
     # 1. 空であるか判定して削除
-    if [ -z "$(ls -A "$rel_path" 2>/dev/null)" ]; then
+    if is_dir_empty "$rel_path"; then
         if [ "$OPT_DRY_RUN" = "true" ]; then
             echo "[DRY] 削除予定: $rel_path"
             deleted_count=$((deleted_count + 1))
@@ -166,8 +176,11 @@ while read -r dir; do
     case "$rel_path" in
         未整理/*)
             if single_sub=$(get_single_subdir "$rel_path"); then
-                parent_dir=$(dirname "$rel_path")
-                subdir_name=$(basename "$single_sub")
+                parent_dir="${rel_path%/*}"
+                if [ "$parent_dir" = "$rel_path" ]; then
+                    parent_dir="."
+                fi
+                subdir_name="${single_sub##*/}"
                 target_dest="$parent_dir/$subdir_name"
                 
                 if [ -e "$target_dest" ]; then
@@ -194,9 +207,6 @@ while read -r dir; do
             fi
             ;;
     esac
-done < "$tmp_dirs"
-
-# テンポラリファイルの削除
-rm -f "$tmp_dirs"
+done < <(find . -depth -type d -print0)
 
 echo "[INFO]  処理完了: 削除したフォルダ数=${deleted_count}件"
