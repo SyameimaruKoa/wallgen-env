@@ -27,8 +27,8 @@ sh setup-illust-env.sh --no-clone
 
 **注意:**
 
-* Termux の場合は `/sdcard` へのアクセス権が必要。事前に `termux-setup-storage` を実行すること。
-* git clone には `git` コマンドが必要。Termux なら `pkg install git` でインストールするのじゃ。
+- Termux の場合は `/sdcard` へのアクセス権が必要。事前に `termux-setup-storage` を実行すること。
+- git clone には `git` コマンドが必要。Termux なら `pkg install git` でインストールするのじゃ。
 
 ## スクリプト一覧じゃ
 
@@ -173,7 +173,32 @@ sh clean-empty-dirs.sh /path/to/イラスト編集用
 sh clean-empty-dirs.sh --dry-run /path/to/イラスト編集用
 ```
 
+### 6. [split-files.sh](split-files.sh)
+
+カレントディレクトリ内のファイルを指定個数（既定値: 256個）ごとに、「カレントディレクトリ名-連番」という名前の子フォルダを作成して収納・分割するスクリプトじゃ。大量のファイルを一定数ごとにフォルダ分けしたい時に便利じゃぞ。
+
+**機能:**
+
+- カレントディレクトリ直下にあるファイル（スクリプト自身を除く）を対象として連番フォルダを作成し、順番に移動・収納するぞ。
+- 既に同名フォルダ（`カレントディレクトリ名-1` など）が存在する場合は、重複しないよう自動的に空いている連番（`-2`, `-3`...）を探して作成する安全設計じゃ。
+- オプションで1フォルダあたりの収納ファイル数を自由に変更可能じゃ。
+
+**使い方:**
+
+```bash
+# 対象フォルダに移動して実行（既定値: 256個ずつ収納）
+cd /path/to/対象フォルダ
+/path/to/split-files.sh
+
+# 100個ずつ収納したい場合
+/path/to/split-files.sh -n 100
+# または
+/path/to/split-files.sh --number 100
+
+# ヘルプを表示
+/path/to/split-files.sh -h
+```
+
 ## 旧スプリクト
 
 気が向いた時に[Old-Archive](Old-Archive)内に[README.md](Old-Archive/README.md)を作ります
-
