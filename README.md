@@ -195,6 +195,13 @@ cd /path/to/対象フォルダ
 # または
 /path/to/split-files.sh --number 100
 
+# 「.」を指定しても引数なしと同じ動作
+/path/to/split-files.sh .
+
+# 複数フォルダ・ワイルドカードを指定（各フォルダの直下を処理）
+/path/to/split-files.sh -n 100 /path/to/画像A /path/to/画像B
+/path/to/split-files.sh "/path/to/画像*"
+
 # ヘルプを表示
 /path/to/split-files.sh -h
 ```
