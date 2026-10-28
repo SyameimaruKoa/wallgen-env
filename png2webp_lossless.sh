@@ -20,7 +20,7 @@ Usage: $(basename "$0") [オプション]
 
 カレントディレクトリ以下の PNG ファイルを再帰的に探索し、
 ロスレス WebP に変換するのじゃ。
-GNU Parallelで並列処理を行い、進捗バーを表示するぞ。
+GNU Parallelで並列処理を行い、ファイル単位の完了数を表示するぞ。
 
 [動作フロー]
     1. find で PNG を再帰探索
@@ -40,6 +40,7 @@ GNU Parallelで並列処理を行い、進捗バーを表示するぞ。
     magick (ImageMagick 7)
     exiftool
     parallel (GNU Parallel)
+    flock (util-linux)
 
 [実行例]
     # 対象フォルダに移動して実行
@@ -62,7 +63,7 @@ process_image() {
     local original_size_bytes=$(stat -c%s "$png_file" 2>/dev/null || echo 0)
     local original_size_h=$(numfmt --to=iec-i --suffix=B --format="%.2f" "$original_size_bytes" 2>/dev/null || echo "${original_size_bytes}B")
 
-    echo "───────────────処理開始: $png_file ($original_size_h)───────────────"
+    echo "[開始] $(basename "$png_file") ($original_size_h)"
 
     # 同名の .webp が既に存在する場合は削除して再作成
     if [[ -f "$webp_file" ]]; then
@@ -133,6 +134,24 @@ process_image() {
 }
 export -f process_image
 
+# --- 並列処理の進捗表示（表示はジョブごとにまとめる） ---
+process_image_with_progress() {
+    process_image "$1"
+    local result=$?
+
+    (
+        flock -x 9 || exit 1
+        local completed
+        IFS= read -r completed < "$TMP_PROGRESS" || completed=0
+        completed=$((completed + 1))
+        printf '%d\n' "$completed" > "$TMP_PROGRESS"
+        printf '[進捗] %d/%d (%d%%)\n' "$completed" "$TOTAL_FILES" "$((completed * 100 / TOTAL_FILES))"
+    ) 9>"${TMP_PROGRESS}.lock"
+
+    return "$result"
+}
+export -f process_image_with_progress
+
 # ==============================================================================
 # --- メイン処理 ---
 # ==============================================================================
@@ -167,17 +186,25 @@ if ! command -v parallel > /dev/null; then
     echo "エラー: GNU Parallel が入っておらん。sudo apt install parallel などでインストールせい。" >&2
     exit 1
 fi
+if ! command -v flock > /dev/null 2>&1; then
+    echo "エラー: 必須コマンド 'flock' (util-linux) が見つかりません。" >&2
+    exit 1
+fi
 
 # ── パス設定 ──────────────────────────────────────────────────
 TARGET_DIR="$(pwd)"
 
 # ── 対象ファイルをリストアップ ─────────────────────────────────
 TMP_FILES=$(mktemp)
-trap 'rm -f "$TMP_FILES"' EXIT
+TMP_PROGRESS=$(mktemp)
+printf '0\n' > "$TMP_PROGRESS"
+trap 'rm -f "$TMP_FILES" "$TMP_PROGRESS" "${TMP_PROGRESS}.lock"' EXIT
 find "$TARGET_DIR" -type f -iname '*.png' -print0 | sort -z > "$TMP_FILES"
 
 # ファイル数をカウント
 total_files=$(tr -cd '\0' < "$TMP_FILES" | wc -c)
+TOTAL_FILES="$total_files"
+export TMP_PROGRESS TOTAL_FILES
 
 if [ "$total_files" -eq 0 ]; then
     echo "対象の PNG ファイルが見つかりませんでした。"
@@ -218,6 +245,6 @@ echo "処理対象ファイル数: $total_files (並列実行数: $CALC_JOBS)"
 echo "☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆"
 
 # ── GNU Parallel で並列実行 ───────────────────────────────────
-cat "$TMP_FILES" | parallel --null -j "$CALC_JOBS" --bar process_image {}
+parallel --null --line-buffer -j "$CALC_JOBS" process_image_with_progress {} < "$TMP_FILES"
 
 echo "全ての処理が完了したのじゃ！"
