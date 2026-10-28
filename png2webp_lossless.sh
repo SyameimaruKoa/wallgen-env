@@ -245,6 +245,6 @@ echo "処理対象ファイル数: $total_files (並列実行数: $CALC_JOBS)"
 echo "☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆"
 
 # ── GNU Parallel で並列実行 ───────────────────────────────────
-parallel --null --group -j "$CALC_JOBS" process_image_with_progress {} < "$TMP_FILES"
+parallel --null --line-buffer -j "$CALC_JOBS" process_image_with_progress {} < "$TMP_FILES"
 
 echo "全ての処理が完了したのじゃ！"
