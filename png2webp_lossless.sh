@@ -63,7 +63,7 @@ process_image() {
     local original_size_bytes=$(stat -c%s "$png_file" 2>/dev/null || echo 0)
     local original_size_h=$(numfmt --to=iec-i --suffix=B --format="%.2f" "$original_size_bytes" 2>/dev/null || echo "${original_size_bytes}B")
 
-    echo "───────────────処理開始: $png_file ($original_size_h)───────────────"
+    echo "[開始] $(basename "$png_file") ($original_size_h)"
 
     # 同名の .webp が既に存在する場合は削除して再作成
     if [[ -f "$webp_file" ]]; then
